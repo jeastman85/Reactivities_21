@@ -1,5 +1,6 @@
 import { tr } from "date-fns/locale";
 import { makeAutoObservable, runInAction } from "mobx";
+import { prototype } from "node:events";
 import agent from "../api/agent";
 import { Photo, Profile } from "../models/profile";
 import { store } from "./store";
@@ -90,6 +91,23 @@ export default class ProfileStore {
         }catch (error) {
             runInAction(() => this.loading = false);
             console.log(error);
+        }
+    }
+
+    updateProfile = async (profile: Partial<Profile>) => {
+        this.loading = true
+        try{
+            await agent.Profiles.updateProfile(profile);
+            runInAction(() => {
+                if(profile.displayName && profile.displayName !== store.userStore.user?.displayName) {
+                    store.userStore.setDisplayName(profile.displayName);
+                }
+                this.profile = {...this.profile, ...profile as Profile}
+                this.loading = false;
+            })
+        } catch (error){
+            console.log(error);
+            runInAction(() => this.loading = false);
         }
     }
 
